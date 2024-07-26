@@ -247,8 +247,28 @@ if img_query is not None:
 
   image_from_query = base64_webp_to_png(img_query)
 
+  # Crop the image to 512x512
+  image_shape = np.array(image_from_query).shape
+
+  image_arr = np.array(image_from_query)
+  if image_shape[0] < image_shape[1]:
+    new_dim_x_1 = int((image_shape[1] - image_shape[0])/2)
+    new_dim_x_2 = int((image_shape[1] + image_shape[0])/2)
+    image_arr = image_arr[:, new_dim_x_1:new_dim_x_2, :]
+
+  elif image_shape[0] > image_shape[1]:
+    new_dim_y_1 = int((image_shape[0] - image_shape[1])/2)
+    new_dim_y_2 = int((image_shape[0] + image_shape[2])/2)
+    image_arr = image_arr[new_dim_y_1:new_dim_y_2, :, :]
+  
+  else:
+      image_arr = image_arr
+  
+  image_arr = cv2.resize(image_arr, (512, 512))
+  image = Image.fromarray(image_arr)
+
   # Save the user input image with a path
-  image_from_query.save('user_input.png')
+  image.save('user_input.png')
 
   # Preprocess the image to make it suitable for inputting to the model
   preprocessed_image = preprocess_image("user_input.png")
@@ -360,7 +380,6 @@ if img_query is None:
 
               # Crop the image to 512x512
               image_shape = np.array(image).shape
-              st.write(image_shape)
 
               image_arr = np.array(image)
               if image_shape[0] < image_shape[1]:
