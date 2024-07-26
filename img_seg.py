@@ -154,6 +154,9 @@ def preprocess_image(path):
     # Read the image as array from the specified path
     image_arr = cv2.imread(path, cv2.IMREAD_COLOR)
 
+    # Crop the image to 512x512
+    image_arr = cv2.resize(image_arr, (512, 512))
+
     # (512, 512, 3) -> (3, 512, 512) ---- torch requirements
     image_arr = np.transpose(image_arr, (2, 0, 1))
 
@@ -176,6 +179,13 @@ def preprocess_image(path):
 
 # Function to postprocess Mask
 def postprocess_mask(image):
+    # if 'model' not in st.session_state:
+    #   # Load and store the model in session state
+    #   model = load_model(path = 'checkpoint_1.pth', map_location = torch.device('cuda' if torch.cuda.is_available() else 'cpu'))
+    #   st.session_state.model = model
+  
+    # model = st.session_state['model']
+
     with torch.no_grad():
       # Model called and a new tensor generated
       pred_y = model(image)
@@ -347,6 +357,28 @@ if img_query is None:
           if uploaded_image is not None:
               # Display the uploaded image
               image = Image.open(uploaded_image)
+
+              # Crop the image to 512x512
+              image_shape = np.array(image).shape
+              st.write(image_shape)
+
+              image_arr = np.array(image)
+              if image_shape[0] < image_shape[1]:
+                new_dim_x_1 = int((image_shape[1] - image_shape[0])/2)
+                new_dim_x_2 = int((image_shape[1] + image_shape[0])/2)
+                image_arr = image_arr[:, new_dim_x_1:new_dim_x_2, :]
+
+              elif image_shape[0] > image_shape[1]:
+                new_dim_y_1 = int((image_shape[0] - image_shape[1])/2)
+                new_dim_y_2 = int((image_shape[0] + image_shape[2])/2)
+                image_arr = image_arr[new_dim_y_1:new_dim_y_2, :, :]
+              
+              else:
+                 image_arr = image_arr
+              
+              image_arr = cv2.resize(image_arr, (512, 512))
+              image = Image.fromarray(image_arr)
+              
 
               # Center align the image
               col1, col2, col3 = st.columns([0.13, 0.6, 0.27])
